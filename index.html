@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Github stats</title>
+	<style>
+		* {
+			box-sizing: border-box;
+		}
+
+		html {
+			background-color: #f2f2f2;
+		}
+
+		@media (min-width: 30em) {
+			html {
+				margin: 2em;
+			}
+			body {
+				box-shadow: 0 0 5em rgba(0,0,0,0.2);
+			}
+		}
+
+		body {
+			max-width: 30em;
+			padding: 1em;
+			margin: 0 auto;
+			color: #333;
+			line-height: 1.4;
+			background-color: #fff;
+		}
+
+		form {
+			margin: 2em 0;
+		}
+
+		h1 {
+			margin-top: 0;
+			line-height: 1.2;
+			border-bottom: 0.2em solid #26c;
+		}
+
+		label {
+			display: block;
+			margin-bottom: 0.5em;
+		}
+
+		input,
+		button {
+			display: block;
+			width: 100%;
+			font-size: inherit;
+			border-radius: 0.3em;
+		}
+
+		input {
+			padding: 0.3em 0.5em;
+			border: 1px solid silver;
+		}
+		input[readonly] {
+			background-color: #f2f2f2;
+		}
+
+		button {
+			font-weight: bold;
+			padding: 0.5em;
+			background-color: #26c;
+			color: #fff;
+			border: 0;
+			cursor: pointer;
+		}
+		button:hover,
+		button:focus {
+			background-color: #15b;
+		}
+		button:disabled {
+			opacity: 0.5;
+			cursor: progress;
+		}
+	</style>
+</head>
+<body>
+	<h1>Github statistics</h1>
+
+	<p>Please enter the name of a repository to fetch the stats.</p>
+
+	<form>
+		<label>
+			Repository
+			<input name="repo" placeholder="jquery/jquery" autofocus />
+		</label>
+		<button>Get stats!</button>
+	</form>
+
+	<label>
+		Average days for pull requests
+		<input name="pulls" readonly />
+	</label>
+	<label>
+		Average days for issues
+		<input name="issues" readonly />
+	</label>
+
+	<script>
+		var setValue = function(name, value) {
+			document.getElementsByName(name)[0].value = value;
+		};
+
+		var setBusy = function(busy) {
+			document.querySelector('button').disabled = busy;
+		};
+
+		var getDuration = function(x) {
+			var created_at = (new Date(x.created_at)).getTime();
+			var closed_at = (new Date(x.closed_at)).getTime();
+			return (closed_at - created_at) / 1000 / 60 / 60 / 24;
+		};
+
+		var getAverage = function(data) {
+			var duration = data.reduce((a, b) => a + getDuration(b), 0);
+			return duration / data.length;
+		};
+
+		var search = new URLSearchParams(location.search);
+		var repo = search.get('repo');
+		if (repo) {
+			setValue('repo', repo);
+			setBusy(true);
+			fetch(`https://api.github.com/repos/${repo}/issues?per_page=100&state=closed`)
+				.then(r => r.json())
+				.then(data => {
+					setBusy(false);
+
+					var pulls = data.filter(x => x.pull_request);
+					setValue('pulls', getAverage(pulls))
+					
+					var issues = data.filter(x => !x.pull_request);
+					setValue('issues', getAverage(issues))
+				});
+		}
+	</script>
+</body>
+</html>
