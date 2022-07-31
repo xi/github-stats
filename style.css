@@ -71,3 +71,14 @@ button:disabled {
 	opacity: 0.5;
 	cursor: progress;
 }
+
+table {
+	width: 100%;
+	margin-top: 2em;
+}
+td, th {
+	text-align: end;
+}
+th:first-child {
+	text-align: start;
+}

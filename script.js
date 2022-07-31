@@ -1,3 +1,5 @@
+var table = document.querySelector('table');
+
 var setValue = function(name, value) {
 	document.getElementsByName(name)[0].value = value;
 };
@@ -17,20 +19,38 @@ var getAverage = function(data) {
 	return duration / data.length;
 };
 
+var addRow = function(row) {
+	var tr = document.createElement('tr');
+	table.append(tr);
+
+	var th = document.createElement('th');
+	th.textContent = row.language;
+	tr.append(th);
+
+	['files', 'lines', 'blanks', 'comments', 'linesOfCode'].forEach(key => {
+		var td = document.createElement('td');
+		td.textContent = row[key];
+		tr.append(td);
+	});
+};
+
 var search = new URLSearchParams(location.search);
 var repo = search.get('repo');
 if (repo) {
 	setValue('repo', repo);
 	setBusy(true);
-	fetch(`https://api.github.com/repos/${repo}/issues?per_page=100&state=closed`)
-		.then(r => r.json())
-		.then(data => {
-			setBusy(false);
+	Promise.all([
+		fetch(`https://api.github.com/repos/${repo}/issues?per_page=100&state=closed`).then(r => r.json()),
+		fetch(`https://api.codetabs.com/v1/loc/?github=${repo}`).then(r => r.json()),
+	]).then(data => {
+		setBusy(false);
 
-			var pulls = data.filter(x => x.pull_request);
-			setValue('pulls', getAverage(pulls))
+		var pulls = data[0].filter(x => x.pull_request);
+		setValue('pulls', getAverage(pulls))
 
-			var issues = data.filter(x => !x.pull_request);
-			setValue('issues', getAverage(issues))
-		});
+		var issues = data[0].filter(x => !x.pull_request);
+		setValue('issues', getAverage(issues))
+
+		data[1].forEach(addRow);
+	});
 }
