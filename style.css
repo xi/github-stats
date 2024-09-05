@@ -23,6 +23,7 @@
 
 html {
 	background-color: var(--color-bg-tint);
+	accent-color: var(--color-primary);
 }
 
 @media (min-width: 30em) {
