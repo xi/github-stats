@@ -5,7 +5,9 @@ var setValue = function(name, value) {
 };
 
 var setBusy = function(busy) {
-	document.querySelector('button').disabled = busy;
+	var btn = document.querySelector('button');
+	btn.disabled = busy;
+	btn.textContent = busy ? 'Loading…' : 'Get stats!';
 };
 
 var getDuration = function(x) {
