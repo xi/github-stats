@@ -21,19 +21,21 @@ var getAverage = function(data) {
 	return duration / data.length;
 };
 
-var addRow = function(row) {
+var addRow = function([lang, bytes]) {
 	var tr = document.createElement('tr');
 	table.append(tr);
 
 	var th = document.createElement('th');
-	th.textContent = row.language;
+	th.textContent = lang;
 	tr.append(th);
 
-	['files', 'lines', 'blanks', 'comments', 'linesOfCode'].forEach(key => {
-		var td = document.createElement('td');
-		td.textContent = row[key];
-		tr.append(td);
-	});
+	var td = document.createElement('td');
+	td.textContent = bytes;
+	tr.append(td);
+
+	var td = document.createElement('td');
+	td.textContent = Math.round(bytes / 40);
+	tr.append(td);
 };
 
 var search = new URLSearchParams(location.search);
@@ -43,7 +45,7 @@ if (repo) {
 	setBusy(true);
 	Promise.all([
 		fetch(`https://api.github.com/repos/${repo}/issues?per_page=100&state=closed`).then(r => r.json()),
-		fetch(`https://api.codetabs.com/v1/loc/?github=${repo}`).then(r => r.json()),
+		fetch(`https://api.github.com/repos/${repo}/languages`).then(r => r.json()),
 	]).then(data => {
 		setBusy(false);
 
@@ -53,6 +55,6 @@ if (repo) {
 		var issues = data[0].filter(x => !x.pull_request);
 		setValue('issues', getAverage(issues))
 
-		data[1].forEach(addRow);
+		Object.entries(data[1]).forEach(addRow);
 	});
 }
